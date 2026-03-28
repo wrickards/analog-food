@@ -208,7 +208,8 @@ export async function GET(req: NextRequest) {
           vendors = vendors
             .map((v) => ({ ...v, _dist: haversineDistance(lat, lng, v.lat, v.lng) }))
             .sort((a, b) => a._dist - b._dist)
-            .map(({ _dist: _d, ...v }) => v)
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            .map(({ _dist, ...v }) => v)
         }
 
         return NextResponse.json({ vendors, count: vendors.length })
