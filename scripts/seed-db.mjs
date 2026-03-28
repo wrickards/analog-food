@@ -3,9 +3,25 @@
 // Usage: node scripts/seed-db.mjs
 
 import { createClient } from '@supabase/supabase-js'
+import { readFileSync } from 'fs'
+import { resolve } from 'path'
 
-const SUPABASE_URL = 'https://opedvjetrquayrazfzlm.supabase.co'
-const SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wZWR2amV0cnF1YXlyYXpmemxtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDcyMTUyMywiZXhwIjoyMDkwMjk3NTIzfQ.0byZVqS43-w3pBwv4KN8IsvaJ6n3LMsQCMBGSwKS_4c'
+// Load from .env.local
+const envPath = resolve(process.cwd(), '.env.local')
+const env = Object.fromEntries(
+  readFileSync(envPath, 'utf8')
+    .split('\n')
+    .filter(l => l.includes('='))
+    .map(l => l.split('=').map(p => p.trim()))
+)
+
+const SUPABASE_URL = env['NEXT_PUBLIC_SUPABASE_URL']
+const SERVICE_ROLE_KEY = env['SUPABASE_SERVICE_ROLE_KEY']
+
+if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
+  console.error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in .env.local')
+  process.exit(1)
+}
 
 const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
 
