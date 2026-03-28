@@ -1,0 +1,40 @@
+export type VendorType = 'farm' | 'farmers-market' | 'specialty-grocer' | 'csa'
+
+export interface Vendor {
+  id: string
+  name: string
+  type: VendorType
+  lat: number
+  lng: number
+  address: string
+  city: string
+  state: string
+  zip: string
+  website?: string
+  phone?: string
+  hours?: string
+  tags: string[]
+  highlights: string[]
+  verified: boolean
+  created_at: string
+}
+
+export interface Subscriber {
+  id: string
+  email: string
+  zip: string
+  created_at: string
+}
+
+export type DangerLevel = 'high' | 'medium' | 'low'
+
+export interface Ingredient {
+  id: string
+  name: string
+  aliases: string[]
+  danger_level: DangerLevel
+  description: string
+  banned_in: string[]
+  clean_alternative: string
+  personal_note?: string
+}
