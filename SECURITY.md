@@ -7,7 +7,7 @@ Analog Food uses two Google Maps API keys with different permission profiles:
 | Variable | Use | Restriction type |
 |---|---|---|
 | `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Client-side map rendering (browser) | HTTP Referrers |
-| `GOOGLE_MAPS_SERVER_KEY` | Server-side Places + Geocoding (API routes) | IP Addresses |
+| `GOOGLE_MAPS_SERVER_KEY` | Server-side Places + Geocoding (API routes) | API type only |
 
 ---
 
@@ -26,13 +26,19 @@ Analog Food uses two Google Maps API keys with different permission profiles:
 
 ## Setting up GOOGLE_MAPS_SERVER_KEY (server-side)
 
-1. Create another API key (or use an existing one)
-2. **Application restrictions** → **IP addresses**
-3. Add the IP addresses of your Vercel deployment (or leave unrestricted while testing — lock down before production)
-4. **API restrictions** → **Restrict key** → select:
+Vercel serverless functions run on dynamic infrastructure with no fixed IP addresses, so IP-based restrictions are not possible. The key is secured by restricting which APIs it can call — it lives only in Vercel's encrypted environment variables and is never sent to the browser.
+
+1. Create a second API key (keep it separate from the client key)
+2. **Application restrictions** → **None** (Vercel has no static IPs)
+3. **API restrictions** → **Restrict key** → select only:
    - Places API
    - Geocoding API
-5. Click Save
+4. Click Save
+
+Even without IP restrictions, this key is safe because:
+- It is never included in client-side JavaScript bundles
+- It is only accessible inside your `/api/vendors` and `/api/geocode` server routes
+- If leaked, it can only call Places and Geocoding — nothing else
 
 ## APIs to enable in Google Cloud Console
 
@@ -58,5 +64,5 @@ Set budget alerts at $10/month to avoid surprise bills:
 
 Free tier covers:
 - 28,000 map loads/month
-- 5,000 Geocoding requests/month  
+- 5,000 Geocoding requests/month
 - 5,000 Places Text Search requests/month
