@@ -28,22 +28,12 @@ values
     true
   ),
   (
-    'Re_ Grocery', 'specialty-grocer',
-    40.6782, -73.9442,
-    '175 Third Ave', 'Brooklyn', 'NY', '11217',
-    'https://re-grocery.com', null,
-    'Mon–Sat 9am–9pm, Sun 10am–7pm',
-    array['zero waste', 'organic', 'local', 'specialty'],
-    array['Zero-waste focus', 'Certified organic products', 'Locally sourced where possible', 'Plastic-free bulk section'],
-    true
-  ),
-  (
     'Farm to People', 'specialty-grocer',
-    40.7128, -74.0060,
-    'Online + NYC Delivery', 'New York', 'NY', '10001',
+    40.7074, -73.9343,
+    '1100 Flushing Ave', 'Brooklyn', 'NY', '11237',
     'https://farmtopeople.com', null,
-    'Online store, local delivery',
-    array['delivery', 'CSA-style', 'organic', 'direct from farms'],
+    'Mon–Fri 9am–6pm (pickup / delivery)',
+    array['delivery', 'CSA-style', 'organic', 'direct from farms', 'Bushwick'],
     array['Direct farmer relationships', 'Weekly curated boxes', 'Certified organic options', 'Transparent sourcing'],
     true
   ),
