@@ -1,5 +1,5 @@
 'use client'
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useMemo } from 'react'
 import dynamic from 'next/dynamic'
 import { Vendor, VendorType } from '@/types'
 
@@ -278,7 +278,10 @@ export default function FindCleanFood() {
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
   }
 
-  const filteredVendors = vendors.filter((v) => filter === 'all' || v.type === filter)
+  const filteredVendors = useMemo(
+    () => vendors.filter((v) => filter === 'all' || v.type === filter),
+    [vendors, filter]
+  )
 
   return (
     <section id="find" className="py-24 bg-cream">
