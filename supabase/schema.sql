@@ -20,6 +20,19 @@ create table if not exists vendors (
   tags text[] default '{}',
   highlights text[] default '{}',
   verified boolean default false,
+  notes text,
+  created_at timestamptz default now()
+);
+
+-- Vendor suggestions table
+create table if not exists vendor_suggestions (
+  id uuid primary key default uuid_generate_v4(),
+  name text not null,
+  address text,
+  website text,
+  zip text,
+  notes text,
+  reviewed boolean default false,
   created_at timestamptz default now()
 );
 
@@ -50,6 +63,7 @@ create table if not exists ingredients (
 alter table vendors enable row level security;
 alter table subscribers enable row level security;
 alter table ingredients enable row level security;
+alter table vendor_suggestions enable row level security;
 
 -- Public read access for vendors and ingredients
 create policy "Public read vendors" on vendors for select using (true);
@@ -57,3 +71,7 @@ create policy "Public read ingredients" on ingredients for select using (true);
 
 -- Only service role can insert/update subscribers
 create policy "Service insert subscribers" on subscribers for insert with check (true);
+
+-- Anyone can submit a vendor suggestion; only service role can read them
+create policy "Public insert suggestions" on vendor_suggestions for insert with check (true);
+create policy "Service read suggestions" on vendor_suggestions for select using (false);

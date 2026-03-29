@@ -16,6 +16,11 @@ export interface Vendor {
   tags: string[]
   highlights: string[]
   verified: boolean
+  notes?: string
+  source?: 'supabase' | 'google'
+  place_id?: string
+  rating?: number
+  user_ratings_total?: number
   created_at: string
 }
 

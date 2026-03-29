@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import dynamic from 'next/dynamic'
 import { Vendor, VendorType } from '@/types'
 
@@ -19,127 +19,101 @@ const FILTER_OPTIONS: { label: string; value: 'all' | VendorType }[] = [
   { label: 'Specialty Grocers', value: 'specialty-grocer' },
 ]
 
-const typeConfig: Record<string, { label: string; color: string; bg: string }> = {
+const TYPE_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   farm: { label: 'Farm / CSA', color: 'text-green-700', bg: 'bg-green-100' },
   'farmers-market': { label: 'Farmers Market', color: 'text-amber-700', bg: 'bg-amber-100' },
   'specialty-grocer': { label: 'Specialty Grocer', color: 'text-teal-700', bg: 'bg-teal-100' },
   csa: { label: 'CSA', color: 'text-green-700', bg: 'bg-green-100' },
 }
 
-const SAMPLE_VENDORS: Vendor[] = [
-  {
-    id: '1', name: 'Brooklyn Grange Rooftop Farm', type: 'farm',
-    lat: 40.7282, lng: -73.9442, address: '37-18 Northern Blvd', city: 'Long Island City', state: 'NY', zip: '11101',
-    website: 'https://brooklyngrangefarm.com', phone: '718-708-5986', hours: 'Seasonal farm stand — check website',
-    tags: ['organic', 'rooftop', 'CSA available', 'NYC'],
-    highlights: ["Nation's largest rooftop soil farm", 'Certified organic', 'CSA shares available', 'Community events'],
-    verified: true, created_at: new Date().toISOString(),
-  },
-  {
-    id: '2', name: 'Grand Army Plaza Greenmarket', type: 'farmers-market',
-    lat: 40.6739, lng: -73.9700, address: 'Grand Army Plaza', city: 'Brooklyn', state: 'NY', zip: '11238',
-    website: 'https://www.grownyc.org/greenmarket/brooklyn-grand-army-plaza', hours: 'Saturdays 8am–4pm, year-round',
-    tags: ['GrowNYC', 'year-round', 'organic vendors', 'Brooklyn'],
-    highlights: ['Year-round Saturday market', 'Multiple certified organic farms', 'Seasonal local produce', 'Artisan food producers'],
-    verified: true, created_at: new Date().toISOString(),
-  },
-  {
-    id: '3', name: 'Re_ Grocery', type: 'specialty-grocer',
-    lat: 40.6782, lng: -73.9442, address: '175 Third Ave', city: 'Brooklyn', state: 'NY', zip: '11217',
-    website: 'https://re-grocery.com', hours: 'Mon–Sat 9am–9pm, Sun 10am–7pm',
-    tags: ['zero waste', 'organic', 'local', 'specialty'],
-    highlights: ['Zero-waste focus', 'Certified organic products', 'Locally sourced where possible', 'Plastic-free bulk section'],
-    verified: true, created_at: new Date().toISOString(),
-  },
-  {
-    id: '4', name: 'Farm to People', type: 'specialty-grocer',
-    lat: 40.7128, lng: -74.0060, address: 'Online + NYC Delivery', city: 'New York', state: 'NY', zip: '10001',
-    website: 'https://farmtopeople.com', hours: 'Online store, local delivery',
-    tags: ['delivery', 'CSA-style', 'organic', 'direct from farms'],
-    highlights: ['Direct farmer relationships', 'Weekly curated boxes', 'Certified organic options', 'Transparent sourcing'],
-    verified: true, created_at: new Date().toISOString(),
-  },
-  {
-    id: '5', name: 'Windfall Farms at Union Square Greenmarket', type: 'farmers-market',
-    lat: 40.7359, lng: -73.9906, address: 'Union Square Park (Vendor)', city: 'New York', state: 'NY', zip: '10003',
-    website: 'https://www.grownyc.org/greenmarket/manhattan-union-square-m', hours: 'Mon, Wed, Fri, Sat 8am–6pm',
-    tags: ['GrowNYC', 'certified organic', 'vegetables', 'herbs'],
-    highlights: ['Certified organic vegetables', 'Rare heirloom varieties', 'Year-round presence at Union Square', 'Hudson Valley grown'],
-    verified: true, created_at: new Date().toISOString(),
-  },
-  {
-    id: '6', name: 'Stoneledge Farm CSA', type: 'csa',
-    lat: 41.9848, lng: -74.5285, address: '5349 County Route 22', city: 'South Cairo', state: 'NY', zip: '12482',
-    website: 'https://stoneledgefarm.com', hours: 'CSA pickup points throughout NYC',
-    tags: ['CSA', 'certified organic', 'Hudson Valley', 'year-round'],
-    highlights: ['Certified organic for 30+ years', 'Year-round CSA shares', 'Multiple NYC pickup locations', 'Community-focused'],
-    verified: true, created_at: new Date().toISOString(),
-  },
-  {
-    id: '7', name: 'Prospect Park Farmers Market', type: 'farmers-market',
-    lat: 40.6601, lng: -73.9683, address: 'Prospect Park W & 15th St', city: 'Brooklyn', state: 'NY', zip: '11215',
-    website: 'https://www.grownyc.org', hours: 'Saturdays 8am–1pm (seasonal)',
-    tags: ['Brooklyn', 'seasonal', 'local farms'],
-    highlights: ['Local Brooklyn vendors', 'Seasonal produce', 'Artisan products'],
-    verified: true, created_at: new Date().toISOString(),
-  },
-  {
-    id: '8', name: 'Eataly NYC Flatiron', type: 'specialty-grocer',
-    lat: 40.7424, lng: -73.9893, address: '200 Fifth Ave', city: 'New York', state: 'NY', zip: '10010',
-    website: 'https://www.eataly.com/us_en/stores/nyc-flatiron/', hours: 'Daily 9am–11pm',
-    tags: ['Italian', 'imported', 'quality ingredients', 'specialty'],
-    highlights: ['Import quality Italian products', 'Fresh pasta and bread', 'Specialty organic selections', 'Artisan producers'],
-    verified: false, created_at: new Date().toISOString(),
-  },
-  {
-    id: '9', name: 'Greenhouse Holistic', type: 'specialty-grocer',
-    lat: 40.7282, lng: -73.9537, address: '23 Meadow St', city: 'Brooklyn', state: 'NY', zip: '11206',
-    website: 'https://www.greenholisticnyc.com', hours: 'Mon–Sat 10am–8pm, Sun 11am–6pm',
-    tags: ['holistic', 'organic', 'supplements', 'local'],
-    highlights: ['Certified organic grocery', 'Natural supplements', 'Local NYC producers', 'Knowledgeable staff'],
-    verified: true, created_at: new Date().toISOString(),
-  },
-  {
-    id: '10', name: 'Queens County Farm Museum', type: 'farm',
-    lat: 40.7416, lng: -73.7425, address: '73-50 Little Neck Pkwy', city: 'Floral Park', state: 'NY', zip: '11004',
-    website: 'https://queensfarm.org', hours: 'Farm stand Sat–Sun 10am–4pm (seasonal)',
-    tags: ['historic', 'educational', 'organic', 'farm stand'],
-    highlights: ["NYC's largest working farm", 'Historic farm since 1697', 'Seasonal farm stand', 'Educational programming'],
-    verified: true, created_at: new Date().toISOString(),
-  },
-]
+function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 3958.8
+  const dLat = ((lat2 - lat1) * Math.PI) / 180
+  const dLng = ((lng2 - lng1) * Math.PI) / 180
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
 
 function VendorCard({
-  vendor, selected, onClick, cardRef,
+  vendor,
+  selected,
+  onClick,
+  cardRef,
+  center,
 }: {
   vendor: Vendor
   selected: boolean
   onClick: () => void
   cardRef: (el: HTMLButtonElement | null) => void
+  center?: { lat: number; lng: number }
 }) {
-  const config = typeConfig[vendor.type] || typeConfig['farm']
+  const config = TYPE_CONFIG[vendor.type] || TYPE_CONFIG['specialty-grocer']
+  const distance =
+    center ? haversineDistance(center.lat, center.lng, vendor.lat, vendor.lng) : null
+
   return (
     <button
       ref={cardRef}
       onClick={onClick}
       className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
-        selected ? 'border-amber bg-amber/5 shadow-sm' : 'border-cream-dark bg-white hover:border-amber/50'
+        selected
+          ? 'border-amber bg-amber/5 shadow-sm'
+          : 'border-cream-dark bg-white hover:border-amber/50'
       }`}
     >
-      <div className="flex items-start justify-between mb-2">
+      {/* Top row: name + type badge */}
+      <div className="flex items-start justify-between mb-1.5">
         <h4 className="font-semibold text-forest text-sm leading-tight pr-2">{vendor.name}</h4>
-        <span className={`text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${config.bg} ${config.color}`}>
+        <span
+          className={`text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${config.bg} ${config.color}`}
+        >
           {config.label}
         </span>
       </div>
-      <p className="text-forest/60 text-xs mb-2">{vendor.address}, {vendor.city}, {vendor.state}</p>
+
+      {/* Verified badge */}
+      {vendor.verified && (
+        <div className="flex items-center gap-1 mb-1.5">
+          <span className="inline-flex items-center gap-1 text-xs font-semibold text-white bg-forest px-2 py-0.5 rounded-full">
+            ✓ Analog Food Verified
+          </span>
+        </div>
+      )}
+
+      {/* Address + distance */}
+      <p className="text-forest/60 text-xs mb-1.5">
+        {vendor.address}
+        {vendor.city ? `, ${vendor.city}` : ''}
+        {vendor.state ? `, ${vendor.state}` : ''}
+        {distance !== null && ` · ${distance < 1 ? '<1' : distance.toFixed(1)} mi`}
+      </p>
+
+      {/* Rating */}
+      {vendor.rating && (
+        <p className="text-amber text-xs font-medium mb-1.5">
+          ★ {vendor.rating.toFixed(1)}
+          {vendor.user_ratings_total
+            ? ` · ${vendor.user_ratings_total.toLocaleString()} reviews`
+            : ''}
+        </p>
+      )}
+
+      {/* Hours */}
       {vendor.hours && (
-        <p className={`text-xs mb-2 font-medium ${
-          vendor.type === 'farmers-market' ? 'text-amber' : 'text-forest/50'
-        }`}>
+        <p
+          className={`text-xs mb-1.5 font-medium ${
+            vendor.type === 'farmers-market' ? 'text-amber' : 'text-forest/50'
+          }`}
+        >
           🕐 {vendor.hours}
         </p>
       )}
+
+      {/* Tags */}
       <div className="flex flex-wrap gap-1">
         {vendor.tags.slice(0, 3).map((tag) => (
           <span key={tag} className="bg-cream text-forest/60 text-xs px-2 py-0.5 rounded-full">
@@ -151,13 +125,118 @@ function VendorCard({
   )
 }
 
+function SuggestForm() {
+  const [name, setName] = useState('')
+  const [address, setAddress] = useState('')
+  const [website, setWebsite] = useState('')
+  const [notes, setNotes] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+  const [error, setError] = useState('')
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!name.trim()) { setError('Vendor name is required'); return }
+    setSubmitting(true)
+    setError('')
+    try {
+      const res = await fetch('/api/suggest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, address, website, notes }),
+      })
+      if (res.ok) {
+        setSubmitted(true)
+      } else {
+        setError('Something went wrong. Please try again.')
+      }
+    } catch {
+      setError('Something went wrong. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  if (submitted) {
+    return (
+      <div className="text-center py-6">
+        <div className="text-3xl mb-2">🌱</div>
+        <p className="text-forest font-semibold mb-1">Thanks for the tip!</p>
+        <p className="text-forest/60 text-sm">We&apos;ll review it and add it to the map if it&apos;s a good fit.</p>
+      </div>
+    )
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs font-medium text-forest/70 mb-1">
+            Vendor name <span className="text-amber">*</span>
+          </label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g. Green Acres Farm"
+            className="w-full bg-white border-2 border-cream-dark rounded-lg px-3 py-2 text-sm text-forest placeholder-forest/30 focus:outline-none focus:border-amber transition-colors"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-forest/70 mb-1">Address</label>
+          <input
+            type="text"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            placeholder="123 Farm Rd, Brooklyn, NY"
+            className="w-full bg-white border-2 border-cream-dark rounded-lg px-3 py-2 text-sm text-forest placeholder-forest/30 focus:outline-none focus:border-amber transition-colors"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-forest/70 mb-1">Website</label>
+          <input
+            type="url"
+            value={website}
+            onChange={(e) => setWebsite(e.target.value)}
+            placeholder="https://"
+            className="w-full bg-white border-2 border-cream-dark rounded-lg px-3 py-2 text-sm text-forest placeholder-forest/30 focus:outline-none focus:border-amber transition-colors"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-forest/70 mb-1">Why it&apos;s clean</label>
+          <input
+            type="text"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Certified organic, no additives…"
+            className="w-full bg-white border-2 border-cream-dark rounded-lg px-3 py-2 text-sm text-forest placeholder-forest/30 focus:outline-none focus:border-amber transition-colors"
+          />
+        </div>
+      </div>
+      {error && <p className="text-red-600 text-xs">{error}</p>}
+      <button
+        type="submit"
+        disabled={submitting}
+        className="btn-primary text-sm py-2.5 px-6 disabled:opacity-60"
+      >
+        {submitting ? 'Sending…' : 'Submit suggestion'}
+      </button>
+    </form>
+  )
+}
+
 export default function FindCleanFood() {
   const [zip, setZip] = useState('')
   const [searchedZip, setSearchedZip] = useState('')
   const [filter, setFilter] = useState<'all' | VendorType>('all')
-  const [vendors, setVendors] = useState<Vendor[]>(SAMPLE_VENDORS)
+  const [vendors, setVendors] = useState<Vendor[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null)
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | undefined>(undefined)
+  const [mapZoom, setMapZoom] = useState(4)
+  const [verifiedCount, setVerifiedCount] = useState(0)
+  const [googleCount, setGoogleCount] = useState(0)
+  const [hasSearched, setHasSearched] = useState(false)
   const cardRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
 
   const fetchVendors = useCallback(async (searchZip?: string, type?: string) => {
@@ -169,42 +248,37 @@ export default function FindCleanFood() {
       const res = await fetch(`/api/vendors?${params}`)
       if (res.ok) {
         const data = await res.json()
-        if (data.vendors?.length) {
-          setVendors(data.vendors)
-          return
+        setVendors(data.vendors || [])
+        setVerifiedCount(data.verified_count || 0)
+        setGoogleCount(data.google_count || 0)
+        if (data.center) {
+          setMapCenter(data.center)
+          setMapZoom(12)
         }
       }
     } catch {
-      // fall through to sample data
+      setVendors([])
     } finally {
       setLoading(false)
     }
-    // Fallback to sample data
-    setVendors(SAMPLE_VENDORS)
   }, [])
 
-  useEffect(() => {
-    fetchVendors()
-  }, [fetchVendors])
-
   const handleSearch = () => {
-    if (!zip.trim()) return
-    setSearchedZip(zip.trim())
-    fetchVendors(zip.trim(), filter !== 'all' ? filter : undefined)
+    const trimmed = zip.trim()
+    if (!trimmed) return
+    setSearchedZip(trimmed)
+    setHasSearched(true)
+    setSelectedVendor(null)
+    fetchVendors(trimmed, filter !== 'all' ? filter : undefined)
   }
 
   const handleVendorSelect = (vendor: Vendor) => {
     setSelectedVendor(vendor)
-    // Scroll the card into view
     const el = cardRefs.current.get(vendor.id)
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-    }
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
   }
 
-  const filteredVendors = vendors.filter(
-    (v) => filter === 'all' || v.type === filter
-  )
+  const filteredVendors = vendors.filter((v) => filter === 'all' || v.type === filter)
 
   return (
     <section id="find" className="py-24 bg-cream">
@@ -213,9 +287,7 @@ export default function FindCleanFood() {
           <p className="text-amber font-medium tracking-widest uppercase text-sm mb-4">
             Find Clean Food
           </p>
-          <h2 className="section-heading text-forest mb-4">
-            Clean food near you
-          </h2>
+          <h2 className="section-heading text-forest mb-4">Clean food near you</h2>
           <p className="text-forest/70 text-lg max-w-xl mx-auto">
             Find farms, farmers markets, CSAs, and specialty grocers committed to organic,
             pesticide-free, locally sourced food.
@@ -235,10 +307,20 @@ export default function FindCleanFood() {
           />
           <button
             onClick={handleSearch}
-            disabled={loading}
-            className="btn-primary py-3 px-6 disabled:opacity-70"
+            disabled={loading || !zip.trim()}
+            className="btn-primary py-3 px-6 disabled:opacity-60"
           >
-            {loading ? '…' : 'Search'}
+            {loading ? (
+              <span className="inline-flex items-center gap-2">
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                </svg>
+                Searching
+              </span>
+            ) : (
+              'Search'
+            )}
           </button>
         </div>
 
@@ -247,7 +329,10 @@ export default function FindCleanFood() {
           {FILTER_OPTIONS.map(({ label, value }) => (
             <button
               key={value}
-              onClick={() => setFilter(value)}
+              onClick={() => {
+                setFilter(value)
+                if (hasSearched) fetchVendors(searchedZip, value !== 'all' ? value : undefined)
+              }}
               className={`px-5 py-2 rounded-full text-sm font-medium border-2 transition-all ${
                 filter === value
                   ? 'bg-forest text-cream border-forest'
@@ -260,23 +345,65 @@ export default function FindCleanFood() {
         </div>
 
         {/* Result count */}
-        {searchedZip && (
+        {hasSearched && !loading && (
           <p className="text-center text-forest/60 text-sm mb-6">
-            {filteredVendors.length} result{filteredVendors.length !== 1 ? 's' : ''} near {searchedZip}
+            {filteredVendors.length === 0 ? (
+              `No results near ${searchedZip}`
+            ) : (
+              <>
+                {filteredVendors.length} result{filteredVendors.length !== 1 ? 's' : ''} near{' '}
+                <span className="font-medium text-forest">{searchedZip}</span>
+                {verifiedCount > 0 && (
+                  <span className="ml-2 inline-flex items-center gap-1">
+                    <span className="text-white bg-forest text-xs font-semibold px-2 py-0.5 rounded-full">
+                      ✓ {verifiedCount} verified
+                    </span>
+                  </span>
+                )}
+                {googleCount > 0 && (
+                  <span className="text-forest/40 ml-1">
+                    · {googleCount} from Google
+                  </span>
+                )}
+              </>
+            )}
           </p>
         )}
 
-        {/* Two panel layout */}
+        {/* Two-panel layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" style={{ height: '600px' }}>
           {/* Left: scrollable list */}
           <div className="overflow-y-auto space-y-3 pr-1">
-            {filteredVendors.length > 0 ? (
+            {!hasSearched ? (
+              <div className="text-center py-16 text-forest/40">
+                <div className="text-5xl mb-4">🔍</div>
+                <p className="font-medium">Enter a zip code to find clean food near you</p>
+                <p className="text-sm mt-1">Works anywhere in the US</p>
+              </div>
+            ) : loading ? (
+              <div className="space-y-3">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="bg-white rounded-xl border-2 border-cream-dark p-4 animate-pulse">
+                    <div className="flex justify-between mb-2">
+                      <div className="h-4 bg-cream-dark rounded w-2/3" />
+                      <div className="h-4 bg-cream-dark rounded w-1/5" />
+                    </div>
+                    <div className="h-3 bg-cream-dark rounded w-1/2 mb-2" />
+                    <div className="flex gap-1">
+                      <div className="h-5 bg-cream-dark rounded-full w-16" />
+                      <div className="h-5 bg-cream-dark rounded-full w-12" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : filteredVendors.length > 0 ? (
               filteredVendors.map((vendor) => (
                 <VendorCard
                   key={vendor.id}
                   vendor={vendor}
                   selected={selectedVendor?.id === vendor.id}
                   onClick={() => handleVendorSelect(vendor)}
+                  center={mapCenter}
                   cardRef={(el) => {
                     if (el) cardRefs.current.set(vendor.id, el)
                     else cardRefs.current.delete(vendor.id)
@@ -286,21 +413,40 @@ export default function FindCleanFood() {
             ) : (
               <div className="text-center py-12 text-forest/40">
                 <div className="text-4xl mb-3">🌱</div>
-                <p>No vendors found for this filter.</p>
+                <p>No results for this filter. Try &quot;All&quot; or a different zip.</p>
               </div>
             )}
           </div>
 
-          {/* Right: map — no overflow-hidden so popups aren't clipped */}
+          {/* Right: map */}
           <div
-            className="rounded-2xl border border-cream-dark shadow-sm"
-            style={{ height: '600px', overflow: 'hidden' }}
+            className="rounded-2xl border border-cream-dark shadow-sm overflow-hidden"
+            style={{ height: '600px' }}
           >
             <VendorMap
               vendors={filteredVendors}
               selectedVendor={selectedVendor}
               onVendorSelect={handleVendorSelect}
+              center={mapCenter}
+              zoom={mapZoom}
             />
+          </div>
+        </div>
+
+        {/* Suggest a Source */}
+        <div className="mt-16 max-w-2xl mx-auto">
+          <div className="text-center mb-6">
+            <p className="text-amber font-medium tracking-widest uppercase text-xs mb-2">
+              Know a good one?
+            </p>
+            <h3 className="text-2xl font-serif font-bold text-forest mb-2">Suggest a source</h3>
+            <p className="text-forest/60 text-sm">
+              Found a great farm, market, or clean grocer that isn&apos;t on the map? Let us know — we verify
+              every suggestion.
+            </p>
+          </div>
+          <div className="card">
+            <SuggestForm />
           </div>
         </div>
       </div>
