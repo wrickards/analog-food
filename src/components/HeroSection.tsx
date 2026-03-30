@@ -50,8 +50,8 @@ export default function HeroSection() {
               style={{ animationDelay: '0.35s', animationFillMode: 'forwards', fontWeight: 300 }}
             >
               The rest of the world already knows what the US is slowly waking up to &mdash; most
-              of what&apos;s on American shelves is engineered, not grown. We&apos;re changing that,
-              one zip code at a time.
+              of what&apos;s on American shelves is engineered, not grown. We&apos;re connecting you
+              to cleaner food, one zip code at a time.
             </p>
             <div
               className="flex flex-col sm:flex-row gap-4 opacity-0 animate-fade-up"
