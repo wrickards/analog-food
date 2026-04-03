@@ -21,7 +21,7 @@ export default function NewsletterSection() {
       const data = await res.json()
       if (res.ok) {
         setStatus('success')
-        setMessage(`You're on the list. The Signal lands in your inbox weekly, tuned to ${zip}.`)
+        setMessage(`You're on the list. The Signal lands in your inbox monthly, tuned to ${zip}.`)
         setEmail('')
         setZip('')
       } else {
@@ -39,16 +39,16 @@ export default function NewsletterSection() {
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <div className="inline-flex items-center gap-2 bg-amber/20 text-amber px-4 py-1.5 rounded-full text-sm font-medium mb-6">
           <span>✦</span>
-          <span>Weekly digest</span>
+          <span>Monthly digest</span>
         </div>
         <h2 className="font-serif text-4xl md:text-5xl font-bold text-cream mb-2">
           The Signal
         </h2>
         <p className="text-amber font-medium tracking-wider uppercase text-sm mb-6">
-          Analog Food&apos;s weekly digest
+          Analog Food&apos;s monthly digest
         </p>
         <p className="text-cream/70 text-base mb-10 leading-relaxed max-w-xl mx-auto" style={{ fontWeight: 300 }}>
-          A weekly read on what&apos;s real &mdash; new farms and markets near you, ingredient alerts,
+          A monthly read on what&apos;s real &mdash; new farms and markets near you, ingredient alerts,
           seasonal picks, and what&apos;s quietly entering (and leaving) American food shelves.
           Curated for your zip code. Named for what food was before they processed it.
         </p>
