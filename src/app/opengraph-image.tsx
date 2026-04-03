@@ -5,34 +5,10 @@ export const alt = 'Analog Food — The signal before the noise'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
-async function loadGoogleFont(
-  family: string,
-  weight: number,
-  italic = false
-): Promise<ArrayBuffer> {
-  const style = italic ? `ital,wght@1,${weight}` : `wght@${weight}`
-  const url = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(family)}:${style}&display=swap`
-  const css = await fetch(url, {
-    headers: {
-      'User-Agent':
-        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    },
-  }).then((r) => r.text())
-  const match = css.match(/src: url\(([^)]+)\) format\('woff2'\)/)
-  if (!match?.[1]) throw new Error(`Font not found: ${family} ${weight}`)
-  return fetch(match[1]).then((r) => r.arrayBuffer())
-}
+const wave =
+  'M4,28 C10,28 10,8 17,8 C24,8 24,48 31,48 C38,48 38,8 45,8 C52,8 52,48 59,48 C66,48 66,8 73,8 C80,8 80,48 87,48'
 
 export default async function Image() {
-  const [playfairItalic, dmSansLight, dmSansMedium] = await Promise.all([
-    loadGoogleFont('Playfair Display', 400, true),
-    loadGoogleFont('DM Sans', 300),
-    loadGoogleFont('DM Sans', 500),
-  ])
-
-  const wave =
-    'M4,28 C10,28 10,8 17,8 C24,8 24,48 31,48 C38,48 38,8 45,8 C52,8 52,48 59,48 C66,48 66,8 73,8 C80,8 80,48 87,48'
-
   return new ImageResponse(
     (
       <div
@@ -44,9 +20,10 @@ export default async function Image() {
           flexDirection: 'column',
           position: 'relative',
           overflow: 'hidden',
+          fontFamily: 'Georgia, serif',
         }}
       >
-        {/* Large faded background sine wave */}
+        {/* Faded background sine wave — large, spanning image */}
         <svg
           style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
           viewBox="0 0 90 56"
@@ -55,14 +32,13 @@ export default async function Image() {
           <path
             d={wave}
             stroke="#8FAF85"
-            strokeWidth="3"
+            strokeWidth="2.5"
             strokeLinecap="round"
             fill="none"
             opacity="0.15"
           />
         </svg>
 
-        {/* Content layer */}
         <div
           style={{
             display: 'flex',
@@ -72,9 +48,9 @@ export default async function Image() {
             position: 'relative',
           }}
         >
-          {/* Logo mark + wordmark — top left */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <svg width="60" height="38" viewBox="0 0 90 56">
+          {/* Logo mark + wordmark */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <svg width="64" height="40" viewBox="0 0 90 56">
               <path
                 d={wave}
                 stroke="#8FAF85"
@@ -83,33 +59,13 @@ export default async function Image() {
                 fill="none"
               />
             </svg>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0px' }}>
-              <span
-                style={{
-                  color: 'white',
-                  fontSize: '32px',
-                  fontFamily: 'DM Sans Light',
-                  fontWeight: 300,
-                  letterSpacing: '3px',
-                }}
-              >
-                analog
-              </span>
-              <span
-                style={{
-                  color: '#C8883A',
-                  fontSize: '32px',
-                  fontFamily: 'DM Sans Medium',
-                  fontWeight: 500,
-                  letterSpacing: '3px',
-                }}
-              >
-                food
-              </span>
+            <div style={{ display: 'flex', fontFamily: 'Arial, sans-serif', fontSize: '30px', letterSpacing: '3px' }}>
+              <span style={{ color: 'white', fontWeight: 300 }}>analog</span>
+              <span style={{ color: '#C8883A', fontWeight: 600 }}>food</span>
             </div>
           </div>
 
-          {/* Center headline + subtext */}
+          {/* Headline + subtext */}
           <div
             style={{
               display: 'flex',
@@ -121,13 +77,13 @@ export default async function Image() {
             <p
               style={{
                 color: 'white',
-                fontSize: '56px',
-                fontFamily: 'Playfair Display',
+                fontSize: '60px',
+                fontFamily: 'Georgia, serif',
                 fontStyle: 'italic',
                 fontWeight: 400,
                 margin: '0 0 28px 0',
                 lineHeight: 1.15,
-                maxWidth: '860px',
+                maxWidth: '900px',
               }}
             >
               The signal before the noise.
@@ -136,25 +92,25 @@ export default async function Image() {
               style={{
                 color: '#8FAF85',
                 fontSize: '22px',
-                fontFamily: 'DM Sans Light',
-                fontWeight: 300,
+                fontFamily: 'Arial, sans-serif',
+                fontWeight: 400,
                 margin: 0,
-                lineHeight: 1.5,
-                maxWidth: '700px',
+                lineHeight: 1.55,
+                maxWidth: '720px',
               }}
             >
               Find clean food near you — farms, markets, and sources free from harmful additives.
             </p>
           </div>
 
-          {/* Bottom: domain */}
+          {/* Domain */}
           <div style={{ display: 'flex' }}>
             <span
               style={{
                 color: '#4A8C5C',
                 fontSize: '16px',
-                fontFamily: 'DM Sans Medium',
-                fontWeight: 500,
+                fontFamily: 'Arial, sans-serif',
+                fontWeight: 400,
                 letterSpacing: '3px',
               }}
             >
@@ -164,13 +120,6 @@ export default async function Image() {
         </div>
       </div>
     ),
-    {
-      ...size,
-      fonts: [
-        { name: 'Playfair Display', data: playfairItalic, style: 'italic', weight: 400 },
-        { name: 'DM Sans Light', data: dmSansLight, style: 'normal', weight: 300 },
-        { name: 'DM Sans Medium', data: dmSansMedium, style: 'normal', weight: 500 },
-      ],
-    }
+    { ...size }
   )
 }
