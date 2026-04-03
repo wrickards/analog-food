@@ -17,13 +17,30 @@ const dmSans = DM_Sans({
 
 export const metadata: Metadata = {
   title: 'Analog Food — The signal before the noise',
-  description: 'Analog Food helps you find locally sourced, organic, and additive-free food near you — farms, farmers markets, and clean grocers, not Whole Foods.',
+  description: 'Find locally sourced, organic, and additive-free food near you. Farms, farmers markets, and clean grocers. Not Whole Foods.',
   keywords: ['organic food', 'clean eating', 'food additives', 'farmers markets', 'local farms', 'pesticide free'],
+  metadataBase: new URL('https://analogfood.co'),
   openGraph: {
-    title: 'Analog Food',
-    description: 'The signal before the noise. Find clean food near you.',
+    title: 'Analog Food — The signal before the noise',
+    description: 'Find clean food near you — farms, markets, and sources free from harmful additives.',
+    url: 'https://analogfood.co',
+    siteName: 'Analog Food',
+    images: [
+      {
+        url: '/opengraph-image',
+        width: 1200,
+        height: 630,
+        alt: 'Analog Food — The signal before the noise',
+      },
+    ],
+    locale: 'en_US',
     type: 'website',
-    url: 'https://analogfood.com',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Analog Food — The signal before the noise',
+    description: 'Find clean food near you — farms, markets, and sources free from harmful additives.',
+    images: ['/opengraph-image'],
   },
 }
 
