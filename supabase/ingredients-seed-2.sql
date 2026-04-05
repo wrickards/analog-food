@@ -1025,7 +1025,7 @@ VALUES
 
 (
   'Saccharin',
-  ARRAY['Saccharin', "Sweet'N Low", 'E954', 'sodium saccharin', 'benzoic sulfimide'],
+  ARRAY['Saccharin', 'Sweet''N Low', 'E954', 'sodium saccharin', 'benzoic sulfimide'],
   'low',
   'The oldest artificial sweetener, discovered in 1879. From 1977 to 2000 the FDA required a cancer warning label after bladder cancer was found in male rats. The label was removed in 2000 when regulators determined the rat mechanism did not apply to humans. Recent studies link saccharin to disruption of gut microbiome composition and potential impairment of glucose tolerance at normal consumption doses.',
   ARRAY['Canada (was banned 1977-2014, now permitted)', 'Previously required warning labels in US (removed 2000)'],
