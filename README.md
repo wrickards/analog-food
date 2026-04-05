@@ -111,6 +111,72 @@ subscribers    — newsletter signups (email + zip)
 ingredients    — decoder database (name, danger level, banned_in, etc.)
 ```
 
+---
+
+## Adding Verified Vendors
+
+Verified vendors appear in the top tier of search results with the amber "✓ Verified" badge. Only add vendors that have been personally reviewed by the Analog Food team.
+
+**Important:** Vendors without a website are excluded from search results entirely — for both the verified tier (Supabase) and the unverified tier (Google Places).
+
+### Via Supabase Table Editor
+
+1. Go to your Supabase project → **Table Editor** → `vendors`
+2. Insert a new row with all required fields
+3. Set `verified = true`
+4. Set `verified_at = now()`
+5. Set `verified_by = 'Analog Food team'`
+6. Make sure the `website` field is filled in
+
+### Via SQL Editor
+
+```sql
+INSERT INTO vendors (
+  name, type, lat, lng, address, city, state, zip,
+  website, phone, hours, tags, highlights,
+  verified, verified_at, verified_by
+) VALUES (
+  'Farm Name', 'farm', 40.7128, -74.0060,
+  '123 Farm Rd', 'Brooklyn', 'NY', '11201',
+  'https://farmwebsite.com',
+  '718-555-0100',
+  'Saturdays 8am–2pm',
+  ARRAY['Organic', 'CSA'],
+  ARRAY['Certified organic since 2010', 'CSA shares available'],
+  true, now(), 'Analog Food team'
+);
+```
+
+### Vendor Types
+
+| `type` value | Displayed as |
+|---|---|
+| `farm` | Farm / CSA |
+| `farmers-market` | Farmers Market |
+| `specialty-grocer` | Specialty Grocer |
+| `csa` | CSA |
+
+### Field Reference
+
+| Field | Required | Notes |
+|---|---|---|
+| `name` | ✓ | Display name |
+| `type` | ✓ | See types table above |
+| `lat` / `lng` | ✓ | Used for map pin and distance sort |
+| `address` | ✓ | Street address only |
+| `city` | ✓ | |
+| `state` | ✓ | Two-letter abbreviation e.g. `NY` |
+| `zip` | ✓ | 5-digit ZIP |
+| `website` | ✓ | **Required** — vendors without a website are hidden |
+| `phone` | — | Optional, rendered as tap-to-call on mobile |
+| `hours` | — | Free-text e.g. `Saturdays 8am–4pm, year-round` |
+| `tags` | ✓ | Short labels e.g. `ARRAY['organic', 'CSA']` |
+| `highlights` | ✓ | 2–4 bullet points for the expanded card view |
+| `verified` | ✓ | `true` for Analog Food verified sources |
+| `verified_at` | ✓ | Set to `now()` when adding |
+| `verified_by` | ✓ | Set to `'Analog Food team'` |
+| `verification_notes` | — | Internal notes about the verification |
+
 Row Level Security is enabled on all tables:
 - `vendors` and `ingredients` — public read
 - `subscribers` — service role insert only

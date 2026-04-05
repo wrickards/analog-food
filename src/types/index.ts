@@ -16,6 +16,9 @@ export interface Vendor {
   tags: string[]
   highlights: string[]
   verified: boolean
+  verified_at?: string
+  verified_by?: string
+  verification_notes?: string
   notes?: string
   source?: 'supabase' | 'google'
   place_id?: string

@@ -129,6 +129,19 @@ function parseAddress(formatted: string): {
   return { address, city, state, zip }
 }
 
+type PlaceResult = {
+  place_id: string
+  name: string
+  formatted_address: string
+  geometry: { location: { lat: number; lng: number } }
+  types: string[]
+  rating?: number
+  user_ratings_total?: number
+}
+
+// Maximum unique places to fetch details for (controls API cost)
+const MAX_PLACE_DETAILS = 40
+
 export async function searchPlacesNearby(
   lat: number,
   lng: number,
@@ -139,18 +152,9 @@ export async function searchPlacesNearby(
 
   const client = new Client()
   const radiusMeters = Math.min(radiusMiles * 1609.34, 50000)
-  type PlaceResult = {
-    place_id: string
-    name: string
-    formatted_address: string
-    geometry: { location: { lat: number; lng: number } }
-    types: string[]
-    rating?: number
-    user_ratings_total?: number
-  }
   const allPlaces = new Map<string, PlaceResult>()
 
-  // Run all search terms in parallel
+  // Step 1: Run all text searches in parallel to collect unique place_ids
   const results = await Promise.allSettled(
     SEARCH_TERMS.map((term) =>
       client.textSearch({
@@ -168,16 +172,43 @@ export async function searchPlacesNearby(
     if (result.status !== 'fulfilled') continue
     for (const place of result.value.data.results) {
       if (!place.place_id || !place.geometry?.location || !place.name) continue
+      if (isChainStore(place.name)) continue
       if (!allPlaces.has(place.place_id)) {
         allPlaces.set(place.place_id, place as PlaceResult)
       }
     }
   }
 
+  // Step 2: Fetch Place Details for each unique place to get website (required) and phone
+  // Cap to MAX_PLACE_DETAILS to control API cost
+  const uniquePlaces = Array.from(allPlaces.entries()).slice(0, MAX_PLACE_DETAILS)
+
+  const detailResults = await Promise.allSettled(
+    uniquePlaces.map(([placeId]) =>
+      client.placeDetails({
+        params: {
+          place_id: placeId,
+          fields: ['website', 'formatted_phone_number'],
+          key: apiKey,
+        },
+      })
+    )
+  )
+
   const vendors: Vendor[] = []
 
-  for (const [placeId, place] of Array.from(allPlaces.entries())) {
-    if (isChainStore(place.name)) continue
+  for (let i = 0; i < uniquePlaces.length; i++) {
+    const [placeId, place] = uniquePlaces[i]
+    const detailResult = detailResults[i]
+
+    if (detailResult.status !== 'fulfilled') continue
+    const detail = detailResult.value.data.result
+
+    // Task 1: Only include results with a confirmed website from Place Details
+    const website = detail.website
+    if (!website || website.trim() === '') continue
+
+    const phone = detail.formatted_phone_number
 
     const { address, city, state, zip } = parseAddress(place.formatted_address || '')
     const type = inferVendorType(place.name)
@@ -193,6 +224,8 @@ export async function searchPlacesNearby(
       city,
       state,
       zip,
+      website,
+      phone,
       tags,
       highlights: [],
       verified: false,

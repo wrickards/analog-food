@@ -38,7 +38,14 @@ const ZIP_CENTROIDS: Record<string, { lat: number; lng: number }> = {
   '11377': { lat: 40.7449, lng: -73.9095 },
 }
 
-export async function geocodeZip(zip: string): Promise<{ lat: number; lng: number } | null> {
+export interface GeocodeResult {
+  lat: number
+  lng: number
+  city?: string
+  state?: string
+}
+
+export async function geocodeZip(zip: string): Promise<GeocodeResult | null> {
   const apiKey = process.env.GOOGLE_MAPS_SERVER_KEY
 
   if (!apiKey) {
@@ -59,7 +66,22 @@ export async function geocodeZip(zip: string): Promise<{ lat: number; lng: numbe
     if (!result) return ZIP_CENTROIDS[zip] ?? null
 
     const { lat, lng } = result.geometry.location
-    return { lat, lng }
+
+    // Extract city and state from address_components
+    let city: string | undefined
+    let state: string | undefined
+    for (const component of result.address_components || []) {
+      const types = component.types as string[]
+      if (types.includes('locality')) {
+        city = component.long_name
+      } else if (types.includes('neighborhood') && !city) {
+        city = component.long_name
+      } else if (types.includes('administrative_area_level_1')) {
+        state = component.short_name
+      }
+    }
+
+    return { lat, lng, city, state }
   } catch (e) {
     console.error('Geocode error:', e)
     return ZIP_CENTROIDS[zip] ?? null

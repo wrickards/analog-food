@@ -47,8 +47,20 @@ function buildPopup(vendor: Vendor): string {
           .map((h) => `<li style="margin-bottom:2px;">${h}</li>`)
           .join('')}</ul>`
       : ''
-  const link = vendor.website
-    ? `<a href="${vendor.website}" target="_blank" rel="noopener" style="color:#C8883A;font-size:12px;font-weight:600;text-decoration:none;">Visit website →</a>`
+
+  const addressQuery = encodeURIComponent(
+    [vendor.address, vendor.city, vendor.state, vendor.zip].filter(Boolean).join(', ')
+  )
+  const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${addressQuery}`
+  const websiteUrl = vendor.website
+    ? vendor.website
+    : `https://www.google.com/search?q=${encodeURIComponent(vendor.name)}`
+  const websiteLabel = vendor.website ? 'Visit website' : 'Search on Google'
+
+  const websiteLink = `<a href="${websiteUrl}" target="_blank" rel="noopener" style="display:inline-block;background:#2D5A3D;color:#fff;font-size:11px;font-weight:600;padding:5px 10px;border-radius:6px;text-decoration:none;margin-right:6px;">${websiteLabel} ↗</a>`
+  const directionsLink = `<a href="${directionsUrl}" target="_blank" rel="noopener" style="display:inline-block;background:#f0ece0;color:#1E3A2F;font-size:11px;font-weight:600;padding:5px 10px;border-radius:6px;text-decoration:none;margin-right:6px;">Directions ↗</a>`
+  const phoneLink = vendor.phone
+    ? `<a href="tel:${vendor.phone.replace(/[^\d+]/g, '')}" style="display:inline-block;background:#f0ece0;color:#1E3A2F;font-size:11px;font-weight:600;padding:5px 10px;border-radius:6px;text-decoration:none;">📞 ${vendor.phone}</a>`
     : ''
 
   return `
@@ -56,7 +68,8 @@ function buildPopup(vendor: Vendor): string {
       ${verifiedBadge}
       <strong style="font-size:14px;color:#1E3A2F;display:block;margin-bottom:3px;">${vendor.name}</strong>
       <p style="color:#666;font-size:12px;margin:0 0 4px;">${vendor.address}${vendor.city ? `, ${vendor.city}` : ''}</p>
-      ${rating}${hours}${highlights}${link}
+      ${rating}${hours}${highlights}
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;">${websiteLink}${directionsLink}${phoneLink}</div>
     </div>
   `
 }
@@ -140,6 +153,7 @@ export default function VendorMap({
     vendors.forEach((vendor) => {
       const color = MARKER_COLORS[vendor.type] || '#2D5A3D'
       const isSelected = selectedVendor?.id === vendor.id
+      const isVerified = vendor.verified
 
       const marker = new gm.Marker({
         position: { lat: vendor.lat, lng: vendor.lng },
@@ -149,11 +163,11 @@ export default function VendorMap({
           path: gm.SymbolPath.CIRCLE,
           scale: isSelected ? 11 : 7,
           fillColor: color,
-          fillOpacity: 1,
+          fillOpacity: isVerified ? 1 : 0.6,
           strokeColor: '#ffffff',
-          strokeWeight: 2.5,
+          strokeWeight: isVerified ? 3 : 1.5,
         },
-        zIndex: isSelected ? 100 : 1,
+        zIndex: isSelected ? 100 : isVerified ? 10 : 5,
       })
 
       marker.addListener('click', () => {
@@ -199,5 +213,35 @@ export default function VendorMap({
     )
   }
 
-  return <div ref={mapRef} className="w-full h-full" style={{ minHeight: '500px' }} />
+  return (
+    <div className="relative w-full h-full" style={{ minHeight: '500px' }}>
+      <div ref={mapRef} className="w-full h-full" />
+      {/* Map legend */}
+      <div
+        className="absolute bottom-8 left-3 rounded-lg pointer-events-none z-10"
+        style={{
+          background: 'white',
+          border: '0.5px solid #D3C9B0',
+          borderRadius: '8px',
+          padding: '8px 12px',
+          fontSize: '11px',
+          color: '#5F5E5A',
+          lineHeight: '1.7',
+        }}
+      >
+        <div className="flex items-center gap-1.5">
+          <svg width="10" height="10" viewBox="0 0 10 10">
+            <circle cx="5" cy="5" r="4" fill="#2D5A3D" stroke="white" strokeWidth="1.5" />
+          </svg>
+          <span>Analog Food Verified</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <svg width="10" height="10" viewBox="0 0 10 10">
+            <circle cx="5" cy="5" r="4" fill="#2D5A3D" fillOpacity="0.6" stroke="white" strokeWidth="0.75" />
+          </svg>
+          <span>Nearby (unverified)</span>
+        </div>
+      </div>
+    </div>
+  )
 }

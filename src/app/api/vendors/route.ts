@@ -23,21 +23,35 @@ export async function GET(req: NextRequest) {
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   let center: { lat: number; lng: number } | null = null
+  let city = ''
+  let locationState = ''
   let supabaseVendors: Vendor[] = []
   let googleVendors: Vendor[] = []
 
   // Geocode the zip if provided
   if (zip) {
-    center = await geocodeZip(zip)
+    const geo = await geocodeZip(zip)
+    if (geo) {
+      center = { lat: geo.lat, lng: geo.lng }
+      city = geo.city || ''
+      locationState = geo.state || ''
+    }
   }
 
   // Fetch verified vendors from Supabase
+  // Task 1: Only return vendors where website IS NOT NULL and not empty
   if (supabaseUrl && supabaseKey && !supabaseUrl.includes('placeholder')) {
     try {
       const { createClient } = await import('@supabase/supabase-js')
       const supabase = createClient(supabaseUrl, supabaseKey)
 
-      let query = supabase.from('vendors').select('*').eq('verified', true)
+      let query = supabase
+        .from('vendors')
+        .select('*')
+        .eq('verified', true)
+        .not('website', 'is', null)
+        .neq('website', '')
+
       if (type) query = query.eq('type', type)
 
       const { data, error } = await query.order('name')
@@ -49,7 +63,7 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // Filter Supabase vendors to within 50 miles of search center
+  // Filter Supabase vendors to within 50 miles of search center, sort by distance
   if (center) {
     const { lat, lng } = center
     supabaseVendors = supabaseVendors
@@ -62,10 +76,10 @@ export async function GET(req: NextRequest) {
   }
 
   // Fetch from Google Places if we have a center
+  // Task 1: searchPlacesNearby now only returns results with a confirmed website
   if (center) {
     try {
       const allGoogle = await searchPlacesNearby(center.lat, center.lng, 5)
-      // Apply type filter
       googleVendors = type ? allGoogle.filter((v) => v.type === type) : allGoogle
     } catch (err) {
       console.error('Google Places error:', err)
@@ -88,14 +102,14 @@ export async function GET(req: NextRequest) {
     )
   }
 
-  // Verified Supabase vendors first, then Google results
-  const vendors = [...supabaseVendors, ...dedupedGoogle]
-
+  // Task 3: Return two separate tiers
   return NextResponse.json({
-    vendors,
-    count: vendors.length,
-    verified_count: supabaseVendors.length,
-    google_count: dedupedGoogle.length,
+    verified: supabaseVendors,
+    nearby: dedupedGoogle,
     center,
+    city,
+    state: locationState,
+    verifiedCount: supabaseVendors.length,
+    nearbyCount: dedupedGoogle.length,
   })
 }

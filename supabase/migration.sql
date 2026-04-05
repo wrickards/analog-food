@@ -26,3 +26,21 @@ create policy "Public insert suggestions" on vendor_suggestions
 -- 5. Only service role can read suggestions
 create policy "Service read suggestions" on vendor_suggestions
   for select using (false);
+
+-- ============================================================
+-- Migration 2: Verification tracking columns
+-- Run this in Supabase SQL Editor after Migration 1
+-- ============================================================
+
+-- 6. Add verification tracking columns to vendors
+alter table vendors add column if not exists verified_at timestamptz;
+alter table vendors add column if not exists verified_by text;
+alter table vendors add column if not exists verification_notes text;
+
+-- 7. Back-fill all currently verified vendors
+update vendors
+set
+  verified_at = now(),
+  verified_by = 'Analog Food team'
+where verified = true
+  and verified_at is null;
