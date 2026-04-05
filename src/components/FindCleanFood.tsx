@@ -257,7 +257,7 @@ function VendorCard({
   )
 }
 
-function SuggestForm({ searchedZip }: { searchedZip?: string }) {
+function SuggestForm() {
   const [name, setName] = useState('')
   const [address, setAddress] = useState('')
   const [website, setWebsite] = useState('')
@@ -753,7 +753,7 @@ export default function FindCleanFood() {
             </p>
           </div>
           <div className="card">
-            <SuggestForm searchedZip={searchedZip} />
+            <SuggestForm />
           </div>
         </div>
       </div>
