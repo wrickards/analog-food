@@ -1,6 +1,36 @@
 -- Analog Food — Ingredient Database Expansion (155 additional entries)
 -- Run this in Supabase SQL Editor AFTER the original seed.sql
--- This INSERT uses ON CONFLICT DO NOTHING so it is safe to re-run
+-- Safe to re-run: deletes any rows with these names first, then re-inserts
+
+DELETE FROM ingredients WHERE name IN (
+  'Blue 1 (Brilliant Blue)', 'Blue 2 (Indigo Carmine)', 'Red 3 (Erythrosine)',
+  'Green 3 (Fast Green)', 'Orange B', 'Citrus Red 2', 'Caramel Color (Class III & IV)',
+  'Annatto', 'Potassium Sorbate', 'Sodium Benzoate', 'Calcium Propionate',
+  'TBHQ (tert-Butylhydroquinone)', 'Sulfur Dioxide', 'Sodium Sulfite',
+  'Sodium Metabisulfite', 'Potassium Bisulfite', 'Benzoic Acid', 'Sorbic Acid',
+  'Methylparaben', 'Propionic Acid', 'Sucralose', 'Acesulfame Potassium',
+  'Neotame', 'Advantame', 'Cyclamate', 'Polysorbate 80', 'Polysorbate 60',
+  'Carboxymethyl Cellulose', 'Soy Lecithin', 'Mono and Diglycerides', 'DATEM',
+  'SSL (Sodium Stearoyl Lactylate)', 'Propylene Glycol', 'Xanthan Gum', 'Guar Gum',
+  'Polydextrose', 'MSG (Monosodium Glutamate)', 'Disodium Inosinate',
+  'Disodium Guanylate', 'Autolyzed Yeast Extract', 'Hydrolyzed Vegetable Protein',
+  'Natural Flavors', 'Artificial Flavors', 'Chlorine Dioxide', 'Benzoyl Peroxide',
+  'Calcium Peroxide', 'Modified Food Starch', 'Methylcellulose',
+  'Hydroxypropyl Methylcellulose', 'Alginate', 'Locust Bean Gum',
+  'Microcrystalline Cellulose', 'Silicon Dioxide', 'Sodium Aluminosilicate',
+  'Yellow Prussiate of Soda', 'Magnesium Silicate', 'Imidacloprid', 'Permethrin',
+  'Malathion', 'Thiabendazole', 'Imazalil', 'Diphenylamine', 'Chlormequat',
+  'Zeranol', 'Melengestrol Acetate', 'Trenbolone Acetate', 'Ractopamine',
+  'Routine Antibiotic Use in Livestock', 'Carrageenan', 'Refined Vegetable Oils',
+  'Palm Oil', 'Enriched Bleached White Flour', 'Refined Salt (Iodized Table Salt)',
+  'BVO (Brominated Vegetable Oil)', 'Partially Hydrogenated Oils',
+  'Artificial Butter Flavor', 'Acrylamide', 'Perfluoroalkyl Substances (PFAS)',
+  'Nitrosamines', 'Bisphenol A (BPA)', 'Artificial Vanilla (Vanillin)',
+  'Carnauba Wax', 'Sodium Phosphate', 'Potassium Chloride', 'Citric Acid',
+  'Natural and Artificial Flavors (Combined)', 'Trisodium Phosphate (TSP) in Cereal',
+  'Acetylated Distarch Adipate', 'Sodium Nitrate', 'Carmine',
+  'Tertiary Butylhydroquinone', 'Brominated Vegetable Oil'
+);
 
 INSERT INTO ingredients (name, aliases, danger_level, description, banned_in, clean_alternative, personal_note)
 VALUES
@@ -1143,4 +1173,4 @@ VALUES
   null
 )
 
-ON CONFLICT (name) DO NOTHING;
+;
