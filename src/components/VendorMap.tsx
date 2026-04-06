@@ -8,6 +8,9 @@ interface VendorMapProps {
   onVendorSelect: (vendor: Vendor) => void
   center?: { lat: number; lng: number }
   zoom?: number
+  hasSearched?: boolean
+  lastSearchedCenter?: { lat: number; lng: number }
+  onAreaSearch?: (lat: number, lng: number) => void
 }
 
 const BRAND_STYLES: google.maps.MapTypeStyle[] = [
@@ -23,11 +26,16 @@ const BRAND_STYLES: google.maps.MapTypeStyle[] = [
   { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#2d5a3d' }] },
 ]
 
-const MARKER_COLORS: Record<string, string> = {
-  farm: '#2D5A3D',
-  csa: '#8FAF85',
-  'farmers-market': '#C8883A',
-  'specialty-grocer': '#4A8C5C',
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371
+  const dLat = ((lat2 - lat1) * Math.PI) / 180
+  const dLng = ((lng2 - lng1) * Math.PI) / 180
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
 function buildPopup(vendor: Vendor): string {
@@ -80,6 +88,9 @@ export default function VendorMap({
   onVendorSelect,
   center,
   zoom,
+  hasSearched,
+  lastSearchedCenter,
+  onAreaSearch,
 }: VendorMapProps) {
   const mapRef = useRef<HTMLDivElement>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -90,8 +101,16 @@ export default function VendorMap({
   const infoWindowRef = useRef<any>(null)
   const [mapLoaded, setMapLoaded] = useState(false)
   const [noApiKey, setNoApiKey] = useState(false)
+  const [showSearchArea, setShowSearchArea] = useState(false)
   const onVendorSelectRef = useRef(onVendorSelect)
   onVendorSelectRef.current = onVendorSelect
+  const onAreaSearchRef = useRef(onAreaSearch)
+  onAreaSearchRef.current = onAreaSearch
+  const lastSearchedCenterRef = useRef(lastSearchedCenter)
+  lastSearchedCenterRef.current = lastSearchedCenter
+  const hasSearchedRef = useRef(hasSearched)
+  hasSearchedRef.current = hasSearched
+  const userInitiatedMoveRef = useRef(false)
 
   // Initialize Google Maps once
   useEffect(() => {
@@ -128,6 +147,27 @@ export default function VendorMap({
 
         mapInstanceRef.current = map
         infoWindowRef.current = new gm.InfoWindow()
+
+        // Track user-initiated drags to show "Search this area" button
+        map.addListener('dragstart', () => {
+          userInitiatedMoveRef.current = true
+        })
+
+        map.addListener('dragend', () => {
+          if (!userInitiatedMoveRef.current) return
+          userInitiatedMoveRef.current = false
+          if (!hasSearchedRef.current || !lastSearchedCenterRef.current) return
+          const newCenter = map.getCenter()
+          if (!newCenter) return
+          const dist = haversineKm(
+            lastSearchedCenterRef.current.lat,
+            lastSearchedCenterRef.current.lng,
+            newCenter.lat(),
+            newCenter.lng()
+          )
+          setShowSearchArea(dist > 1)
+        })
+
         setMapLoaded(true)
       } catch (e) {
         console.error('Google Maps init error:', e)
@@ -151,9 +191,14 @@ export default function VendorMap({
     markersRef.current = []
 
     vendors.forEach((vendor) => {
-      const color = MARKER_COLORS[vendor.type] || '#2D5A3D'
       const isSelected = selectedVendor?.id === vendor.id
       const isVerified = vendor.verified
+
+      const fillColor = isVerified ? '#1E3A2F' : '#8FAF85'
+      const fillOpacity = isVerified ? 0.95 : 0.75
+      const strokeWeight = isVerified ? 3 : 1.5
+      const scale = isSelected ? 12 : isVerified ? 10 : 8
+      const zIndex = isSelected ? 100 : isVerified ? 10 : 5
 
       const marker = new gm.Marker({
         position: { lat: vendor.lat, lng: vendor.lng },
@@ -161,13 +206,13 @@ export default function VendorMap({
         title: vendor.name,
         icon: {
           path: gm.SymbolPath.CIRCLE,
-          scale: isSelected ? 11 : 7,
-          fillColor: color,
-          fillOpacity: isVerified ? 1 : 0.6,
+          scale,
+          fillColor,
+          fillOpacity,
           strokeColor: '#ffffff',
-          strokeWeight: isVerified ? 3 : 1.5,
+          strokeWeight,
         },
-        zIndex: isSelected ? 100 : isVerified ? 10 : 5,
+        zIndex,
       })
 
       marker.addListener('click', () => {
@@ -192,12 +237,21 @@ export default function VendorMap({
     mapInstanceRef.current.setZoom(14)
   }, [mapLoaded, selectedVendor])
 
-  // Update map center/zoom after a search
+  // Update map center/zoom after a search — reset "Search this area" button
   useEffect(() => {
     if (!mapLoaded || !center || !mapInstanceRef.current) return
+    setShowSearchArea(false)
     mapInstanceRef.current.panTo(center)
     if (zoom) mapInstanceRef.current.setZoom(zoom)
   }, [mapLoaded, center, zoom])
+
+  const handleSearchThisArea = () => {
+    if (!mapInstanceRef.current) return
+    const c = mapInstanceRef.current.getCenter()
+    if (!c) return
+    setShowSearchArea(false)
+    onAreaSearchRef.current?.(c.lat(), c.lng())
+  }
 
   if (noApiKey) {
     return (
@@ -216,6 +270,28 @@ export default function VendorMap({
   return (
     <div className="relative w-full h-full" style={{ minHeight: '500px' }}>
       <div ref={mapRef} className="w-full h-full" />
+
+      {/* "Search this area" button — top-center on sm+, bottom-center on mobile */}
+      {showSearchArea && (
+        <button
+          onClick={handleSearchThisArea}
+          className="absolute left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 px-4 py-2 rounded-full shadow-md transition-all hover:shadow-lg active:scale-95 bottom-16 sm:bottom-auto sm:top-3"
+          style={{
+            background: '#FFFFFF',
+            color: '#1E3A2F',
+            fontSize: '13px',
+            fontWeight: 600,
+            border: '1px solid #D3C9B0',
+          }}
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          Search this area
+        </button>
+      )}
+
       {/* Map legend */}
       <div
         className="absolute bottom-8 left-3 rounded-lg pointer-events-none z-10"
@@ -231,13 +307,13 @@ export default function VendorMap({
       >
         <div className="flex items-center gap-1.5">
           <svg width="10" height="10" viewBox="0 0 10 10">
-            <circle cx="5" cy="5" r="4" fill="#2D5A3D" stroke="white" strokeWidth="1.5" />
+            <circle cx="5" cy="5" r="4" fill="#1E3A2F" stroke="white" strokeWidth="1.5" />
           </svg>
           <span>Analog Food Verified</span>
         </div>
         <div className="flex items-center gap-1.5">
           <svg width="10" height="10" viewBox="0 0 10 10">
-            <circle cx="5" cy="5" r="4" fill="#2D5A3D" fillOpacity="0.6" stroke="white" strokeWidth="0.75" />
+            <circle cx="5" cy="5" r="4" fill="#8FAF85" stroke="white" strokeWidth="0.75" />
           </svg>
           <span>Nearby (unverified)</span>
         </div>

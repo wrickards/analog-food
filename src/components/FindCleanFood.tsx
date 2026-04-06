@@ -376,7 +376,9 @@ export default function FindCleanFood() {
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | undefined>(undefined)
   const [mapZoom, setMapZoom] = useState(4)
   const [hasSearched, setHasSearched] = useState(false)
+  const [isAreaSearch, setIsAreaSearch] = useState(false)
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+  const resultsListRef = useRef<HTMLDivElement>(null)
 
   // Mobile default: show verified only
   useEffect(() => {
@@ -385,11 +387,17 @@ export default function FindCleanFood() {
     }
   }, [])
 
-  const fetchVendors = useCallback(async (searchZip?: string, type?: string) => {
+  const fetchVendors = useCallback(async (searchZip?: string, type?: string, latLng?: { lat: number; lng: number }) => {
     setLoading(true)
     try {
       const params = new URLSearchParams()
-      if (searchZip) params.set('zip', searchZip)
+      if (latLng) {
+        params.set('lat', String(latLng.lat))
+        params.set('lng', String(latLng.lng))
+        params.set('radius', '8000')
+      } else if (searchZip) {
+        params.set('zip', searchZip)
+      }
       if (type && type !== 'all' && type !== 'verified-only') params.set('type', type)
       const res = await fetch(`/api/vendors?${params}`)
       if (res.ok) {
@@ -416,17 +424,36 @@ export default function FindCleanFood() {
     if (!trimmed) return
     setSearchedZip(trimmed)
     setHasSearched(true)
+    setIsAreaSearch(false)
     setSelectedVendor(null)
     const typeFilter = filter !== 'all' && filter !== 'verified-only' ? filter : undefined
     fetchVendors(trimmed, typeFilter)
   }
+
+  const handleAreaSearch = useCallback((lat: number, lng: number) => {
+    setHasSearched(true)
+    setIsAreaSearch(true)
+    setSelectedVendor(null)
+    const typeFilter = filter !== 'all' && filter !== 'verified-only' ? filter : undefined
+    fetchVendors(undefined, typeFilter, { lat, lng })
+    // On mobile, scroll the results list into view after a short delay
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      setTimeout(() => {
+        resultsListRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 400)
+    }
+  }, [filter, fetchVendors])
 
   const handleFilterChange = (value: typeof filter) => {
     setFilter(value)
     if (hasSearched) {
       // Type filters require a re-fetch; 'all' re-fetches without type; 'verified-only' is UI-only
       if (value !== 'verified-only') {
-        fetchVendors(searchedZip, value !== 'all' ? value : undefined)
+        if (isAreaSearch && mapCenter) {
+          fetchVendors(undefined, value !== 'all' ? value : undefined, mapCenter)
+        } else {
+          fetchVendors(searchedZip, value !== 'all' ? value : undefined)
+        }
       }
     }
   }
@@ -456,6 +483,7 @@ export default function FindCleanFood() {
   )
   const totalCount = filteredVerified.length + filteredNearby.length
   const locationLabel = city ? `${city}${locationState ? `, ${locationState}` : ''}` : searchedZip
+  const summaryLocation = isAreaSearch ? null : locationLabel
 
   return (
     <section id="find" className="py-24 bg-cream">
@@ -521,22 +549,33 @@ export default function FindCleanFood() {
           ))}
         </div>
 
-        {/* Task 7 — Result summary bar */}
+        {/* Result summary bar */}
         {hasSearched && !loading && (
           <p className="text-center text-sm mb-6" style={{ color: '#5F5E5A' }}>
             {totalCount === 0 ? (
               <>
-                No sources found near {searchedZip}.{' '}
+                No sources found {summaryLocation ? `near ${summaryLocation}` : 'in this area'}.{' '}
                 <a href="#suggest" className="underline hover:text-forest transition-colors">
                   Suggest a source below.
                 </a>
               </>
             ) : filter === 'verified-only' ? (
-              `${filteredVerified.length} verified source${filteredVerified.length !== 1 ? 's' : ''} near ${locationLabel}`
+              <>
+                {filteredVerified.length} verified source{filteredVerified.length !== 1 ? 's' : ''}{' '}
+                {summaryLocation ? (
+                  <>near <span className="font-medium" style={{ color: '#1E3A2F' }}>{summaryLocation}</span></>
+                ) : (
+                  'in this area'
+                )}
+              </>
             ) : (
               <>
-                {totalCount} source{totalCount !== 1 ? 's' : ''} near{' '}
-                <span className="font-medium" style={{ color: '#1E3A2F' }}>{locationLabel}</span>
+                {totalCount} source{totalCount !== 1 ? 's' : ''}{' '}
+                {summaryLocation ? (
+                  <>near <span className="font-medium" style={{ color: '#1E3A2F' }}>{summaryLocation}</span></>
+                ) : (
+                  'in this area'
+                )}
                 {' — '}
                 <span style={{ color: '#2D5A3D' }}>{filteredVerified.length} verified</span>
                 {' · '}
@@ -549,7 +588,7 @@ export default function FindCleanFood() {
         {/* Two-panel layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" style={{ height: '600px' }}>
           {/* Left: scrollable two-tier list */}
-          <div className="overflow-y-auto pr-1 space-y-0">
+          <div ref={resultsListRef} className="overflow-y-auto pr-1 space-y-0">
             {!hasSearched ? (
               <div className="text-center py-16 text-forest/40">
                 <div className="text-5xl mb-4">🔍</div>
@@ -736,6 +775,9 @@ export default function FindCleanFood() {
               onVendorSelect={handleVendorSelect}
               center={mapCenter}
               zoom={mapZoom}
+              hasSearched={hasSearched}
+              lastSearchedCenter={mapCenter}
+              onAreaSearch={handleAreaSearch}
             />
           </div>
         </div>

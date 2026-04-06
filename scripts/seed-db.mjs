@@ -81,7 +81,7 @@ async function seed() {
   console.log(`Inserting ${vendors.length} vendors...`)
   const { error: vendorError } = await supabase
     .from('vendors')
-    .upsert(vendors, { onConflict: 'name' })
+    .insert(vendors)
 
   if (vendorError) {
     console.error('❌ Vendor insert failed:', vendorError.message)
@@ -94,7 +94,7 @@ async function seed() {
   console.log(`Inserting ${ingredients.length} ingredients...`)
   const { error: ingredientError } = await supabase
     .from('ingredients')
-    .upsert(ingredients, { onConflict: 'name' })
+    .insert(ingredients)
 
   if (ingredientError) {
     console.error('❌ Ingredient insert failed:', ingredientError.message)
