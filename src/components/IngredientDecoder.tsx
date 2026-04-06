@@ -175,7 +175,7 @@ export default function IngredientDecoder() {
         {/* Ingredient count */}
         {ingredientCount !== null && (
           <p className="text-center mb-4 text-[12px]" style={{ color: '#888780' }}>
-            Searching {ingredientCount.toLocaleString()} ingredients — updated regularly
+            Database of {ingredientCount.toLocaleString()} flagged ingredients and growing
           </p>
         )}
 
